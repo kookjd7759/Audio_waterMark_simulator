@@ -4,9 +4,10 @@
 ## 실행 화면
 ![화면 캡처 2024-07-15 192500](https://github.com/user-attachments/assets/3e56175a-f2a4-4967-a9ba-2a992b6dfc1c)
 
-Sound file을 불러오거나 녹음하여 음성 파일을 선택(Sound file은 1Channel 16,000Hz (.wav) 음성 파일이어야만 함.),
+Sound file을 불러오거나 녹음하여 음성 파일을 선택(Sound file은 1Channel 16,000Hz (.wav) 음성 파일이어야만 함.)
 
 [Create And insert] : 선택된 음성 파일에 waterMark 삽입
+
 [Extract] : waterMark 검출
 
 ## 완성 전 공개 버전
