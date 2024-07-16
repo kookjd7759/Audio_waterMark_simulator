@@ -55,6 +55,3 @@ def verify_watermark(watermark_data, signature, public_key_file):
         print("The watermark is authentic.")
     except (ValueError, TypeError):
         print("The watermark is not authentic.")
-
-data = create()
-print(type(data[0]))

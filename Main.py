@@ -33,13 +33,15 @@ class MyWindow(QWidget):
         self.init()
         
         self.lbl_filePath = self.findChildren(QGroupBox)[0].findChildren(QLineEdit)[0]
+        self.lbl_insert_Result = self.findChildren(QGroupBox)[1].findChildren(QLineEdit)[0]
+        self.lbl_extract_Result = self.findChildren(QGroupBox)[1].findChildren(QLineEdit)[1]
         
         self.model = wavmark.load_model().to(torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
 
     def init(self):
         self.setWindowTitle('WaterMarking Simulator')
-        self.setMaximumSize(700, 300)
-        self.setMinimumSize(700, 300)
+        self.setMaximumSize(700, 250)
+        self.setMinimumSize(700, 250)
         self.center()
 
         grid = QGridLayout()
@@ -79,13 +81,13 @@ class MyWindow(QWidget):
             btn_WMcreate_insert = QPushButton('Create And insert', self)
             btn_WMcreate_insert.clicked.connect(self.btn_WMcreate_insert_function)
             lbl_insert_Result = QLineEdit(self)
-            lbl_insert_Result.setText('Waiting...')
+            lbl_insert_Result.setText('(None)')
             lbl_insert_Result.setReadOnly(True)
             
             lbl_extract = QLabel('[Extract]', self)
             btn_WMextract = QPushButton('Extract', self)
             lbl_extract_Result = QLineEdit(self)
-            lbl_extract_Result.setText('Waiting...')
+            lbl_extract_Result.setText('(None)')
             lbl_extract_Result.setReadOnly(True)
             btn_WMextract.clicked.connect(self.btn_WMextract_function)
 
@@ -111,8 +113,7 @@ class MyWindow(QWidget):
         
     def btn_WMcreate_insert_function(self):
         payload = wm.create()
-        print("Payload:", payload)
-        print("Payload size: ", len(payload))
+        print(f'Payload: {payload}, size: {len(payload)}')
         print("SOUNDPATH: ", self.SOUNDPATH)
 
         signal, sample_rate = soundfile.read(self.SOUNDPATH)
@@ -121,11 +122,19 @@ class MyWindow(QWidget):
 
         soundfile.write(self.SOUNDPATH, watermarked_signal, 16000)
 
+        payload_txt = ''.join(str(x) for x in payload)
+        self.lbl_insert_Result.setText(payload_txt)
 
     def btn_WMextract_function(self):
         signal, sample_rate = soundfile.read(self.SOUNDPATH)
         payload_decoded, _ = wavmark.decode_watermark(self.model, signal, show_progress=True)
-        print(payload_decoded)
+
+        payload_list = payload_decoded.tolist()
+        payload_txt = ''.join(str(x) for x in payload_list)
+        print(payload_txt)
+        self.lbl_extract_Result.setText(payload_txt)
+
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
