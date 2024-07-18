@@ -3,6 +3,7 @@ import sys
 import time
 import numpy as np
 import soundfile
+import Path
 import torch
 import wavmark
 
@@ -68,6 +69,9 @@ class MyWindow(QWidget):
     def load_creatkey(self):
         wm.createKey()
 
+    def load_set(self):
+        self.SOUNDPATH = Path.getsound() + 'sound.wav'
+
 
 
     def __init__(self):
@@ -78,19 +82,20 @@ class MyWindow(QWidget):
         self.loading_dialog.show()
         QApplication.processEvents()  # 이벤트를 처리하여 창이 표시되도록 함
 
-        self.loading_dialog.setProgress('UI 불러오는 중 ...', 0)
-        self.init()
+        self.loading_dialog.setProgress('로딩 중 ...', 0)
+        self.UIinit()
         self.load_findChildren()
-        self.loading_dialog.setProgress('Model 불러오는 중 ...', 30)
+        self.load_set()
+        self.loading_dialog.setProgress('Model 불러오는 중 ...', 20)
         self.load_loadModel()
-        self.loading_dialog.setProgress('Key 생성 중 ...', 80)
+        self.loading_dialog.setProgress('Key 생성 중 ...', 60)
         self.load_creatkey()
         self.loading_dialog.setProgress('완료 !', 100)
 
         # 서브 창 닫기
         self.loading_dialog.close()
 
-    def init(self):
+    def UIinit(self):
         self.setWindowTitle('WaterMarking Simulator')
         self.setMaximumSize(700, 250)
         self.setMinimumSize(700, 250)
