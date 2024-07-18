@@ -1,12 +1,9 @@
 import sounddevice as sd
 from scipy.io.wavfile import write
 import os
+import Path
 
 fs = 16000
-
-def getRecordpath():
-    path = os.getcwd() + '\\Audio_waterMark_simulator\\Sound\\sound.wav'
-    return path
 
 def recording(sec):
     print("Start recording")
@@ -14,7 +11,7 @@ def recording(sec):
     sd.wait()  # 녹음 완료까지 대기
     print("recording ended")
 
-    file = getRecordpath()
+    file = Path.getsound() + 'sound.wav'
     write(file, fs, recording)
     print(f"file saved : {file}")
 

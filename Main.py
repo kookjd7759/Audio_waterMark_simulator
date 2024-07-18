@@ -1,9 +1,11 @@
 import os
 import sys
+import time
 import numpy as np
 import soundfile
 import torch
 import wavmark
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -14,6 +16,33 @@ import WaterMark as wm
 SOUNDFILE_GB_NAME = 'Sound file'
 WATERMARK_GB_NAME = 'Watermark'
 SOUNDPATH = ''
+
+class LoadingDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        vbox = QVBoxLayout()
+
+        self.setWindowTitle('Loading')
+        self.setMinimumSize(250, 70)
+        self.setMaximumSize(250, 70)
+        self.label = QLabel('Loading ...', self)
+
+        vbox.addWidget(self.label)
+
+        self.progress = QProgressBar(self)
+        self.progress.setMinimum(0)
+        self.progress.setMaximum(100)
+        self.progress.setValue(0)
+        vbox.addWidget(self.progress)
+        
+        self.setLayout(vbox)
+
+    def setProgress(self, string, num):
+        self.label.setText(string)
+        self.progress.setValue(num)
+
+
 
 class MyWindow(QWidget):
 
@@ -28,15 +57,38 @@ class MyWindow(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def __init__(self):
-        super().__init__()
-        self.init()
-        
+    def load_findChildren(self):
         self.lbl_filePath = self.findChildren(QGroupBox)[0].findChildren(QLineEdit)[0]
         self.lbl_insert_Result = self.findChildren(QGroupBox)[1].findChildren(QLineEdit)[0]
         self.lbl_extract_Result = self.findChildren(QGroupBox)[1].findChildren(QLineEdit)[1]
-        
+
+    def load_loadModel(self):
         self.model = wavmark.load_model().to(torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
+    
+    def load_creatkey(self):
+        wm.createKey()
+
+
+
+    def __init__(self):
+        super().__init__()
+
+        # 서브 창 띄우기
+        self.loading_dialog = LoadingDialog()
+        self.loading_dialog.show()
+        QApplication.processEvents()  # 이벤트를 처리하여 창이 표시되도록 함
+
+        self.loading_dialog.setProgress('UI 불러오는 중 ...', 0)
+        self.init()
+        self.load_findChildren()
+        self.loading_dialog.setProgress('Model 불러오는 중 ...', 30)
+        self.load_loadModel()
+        self.loading_dialog.setProgress('Key 생성 중 ...', 80)
+        self.load_creatkey()
+        self.loading_dialog.setProgress('완료 !', 100)
+
+        # 서브 창 닫기
+        self.loading_dialog.close()
 
     def init(self):
         self.setWindowTitle('WaterMarking Simulator')
@@ -56,6 +108,7 @@ class MyWindow(QWidget):
 
             lbl_filepath = QLineEdit(self)
             lbl_filepath.setReadOnly(True)
+
             vbox = QVBoxLayout()
             vbox.addWidget(lbl_filepath)
 
