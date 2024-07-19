@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import numpy as np
@@ -6,6 +5,7 @@ import soundfile
 import Path
 import torch
 import wavmark
+import threading
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -19,15 +19,16 @@ WATERMARK_GB_NAME = 'Watermark'
 SOUNDPATH = ''
 
 class LoadingDialog(QDialog):
-    def __init__(self):
+
+    def __init__(self, title = 'Loading', lbl = 'Loading ...'):
         super().__init__()
 
         vbox = QVBoxLayout()
 
-        self.setWindowTitle('Loading')
+        self.setWindowTitle(title)
         self.setMinimumSize(250, 70)
         self.setMaximumSize(250, 70)
-        self.label = QLabel('Loading ...', self)
+        self.label = QLabel(lbl, self)
 
         vbox.addWidget(self.label)
 
@@ -42,7 +43,7 @@ class LoadingDialog(QDialog):
     def setProgress(self, string, num):
         self.label.setText(string)
         self.progress.setValue(num)
-
+    
 
 
 class MyWindow(QWidget):
@@ -52,16 +53,26 @@ class MyWindow(QWidget):
         self.lbl_filePath.setText(self.SOUNDPATH)
         print(self.SOUNDPATH)
 
+    def getrecordTime(self):
+        string = self.cb_recordTime.currentText()
+        return int(string)
+
     def center(self):
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
+
+
     def load_findChildren(self):
-        self.lbl_filePath = self.findChildren(QGroupBox)[0].findChildren(QLineEdit)[0]
-        self.lbl_insert_Result = self.findChildren(QGroupBox)[1].findChildren(QLineEdit)[0]
-        self.lbl_extract_Result = self.findChildren(QGroupBox)[1].findChildren(QLineEdit)[1]
+        self.gb_sound = self.findChildren(QGroupBox)[0]
+        self.gb_waterMark = self.findChildren(QGroupBox)[1]
+
+        self.lbl_filePath = self.gb_sound.findChildren(QLineEdit)[0]
+        self.cb_recordTime = self.gb_sound.findChildren(QComboBox)[0]
+        self.lbl_insert_Result = self.gb_waterMark.findChildren(QLineEdit)[0]
+        self.lbl_extract_Result = self.gb_waterMark.findChildren(QLineEdit)[1]
 
     def load_loadModel(self):
         self.model = wavmark.load_model().to(torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
@@ -70,7 +81,8 @@ class MyWindow(QWidget):
         wm.createKey()
 
     def load_set(self):
-        self.SOUNDPATH = Path.getsound() + 'sound.wav'
+        self.update_soundPath(Path.getSoundFile())
+        self.cb_recordTime.setCurrentText('3')
 
 
 
@@ -119,11 +131,21 @@ class MyWindow(QWidget):
 
             btn_selectFile = QPushButton('Import sound file', self)
             btn_selectFile.clicked.connect(self.btn_selectSoundFile_function)
-            btn_record = QPushButton('New recording (3 sec)', self)
+            btn_record = QPushButton('New recording', self)
             btn_record.clicked.connect(self.btn_record_function)
+            
+            lbl_time = QLabel(self)
+            lbl_time.setText('        Recording time (sec) :')
+
+            cb_recordTime = QComboBox(self)
+            for i in range(2, 11):
+                cb_recordTime.addItem(str(i))
+    
             hbox = QHBoxLayout()
             hbox.addWidget(btn_selectFile)
             hbox.addWidget(btn_record)
+            hbox.addWidget(lbl_time)
+            hbox.addWidget(cb_recordTime)
 
             vbox.addLayout(hbox)
 
@@ -166,8 +188,34 @@ class MyWindow(QWidget):
         self.update_soundPath(fname[0])
 
     def btn_record_function(self):
-        mic.recording(3)
-        self.update_soundPath(mic.getRecordpath())
+        self.gb_sound.setEnabled(False)
+        self.gb_waterMark.setEnabled(False)
+
+        recordTime = self.getrecordTime()
+
+        def recording():
+            mic.recording(recordTime)
+            self.update_soundPath(Path.getSoundFile())
+
+        thread_recording = threading.Thread(target=recording)
+        thread_recording.start()
+
+        self.loading_dialog = LoadingDialog('Record', 'Recording ...')
+        self.loading_dialog
+        self.loading_dialog.show()
+        QApplication.processEvents()  # 이벤트를 처리하여 창이 표시되도록 함
+
+        self.loading_dialog.setProgress('Recording ...', 0)
+        for i in range(1, recordTime + 1):
+            time.sleep(1)
+            self.loading_dialog.setProgress('Recording ...', int(100/recordTime * i))
+        self.loading_dialog.setProgress('완료 !', 100)
+
+        # 서브 창 닫기
+        self.loading_dialog.close()
+
+        self.gb_sound.setEnabled(True)
+        self.gb_waterMark.setEnabled(True)
         
     def btn_WMcreate_insert_function(self):
         payload = wm.create()

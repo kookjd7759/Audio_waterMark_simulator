@@ -13,7 +13,7 @@ def createKey():
     private_key = key.export_key()
     public_key = key.publickey().export_key()
 
-    path = Path.getkey()
+    path = Path.getKeyFolder()
     with open(path + 'private.pem', "wb") as f:
         f.write(private_key)
 
@@ -21,7 +21,7 @@ def createKey():
         f.write(public_key)
 
 def create():
-    private_key_file = Path.getkey() + 'private.pem'
+    private_key_file = Path.getKeyFolder() + 'private.pem'
     # 타임스탬프 추가
     timestamp = int(time.time())
     watermark_data = f"{random.random()}|{timestamp}"

@@ -11,7 +11,7 @@ def recording(sec):
     sd.wait()  # 녹음 완료까지 대기
     print("recording ended")
 
-    file = Path.getsound() + 'sound.wav'
+    file = Path.getSoundFile()
     write(file, fs, recording)
     print(f"file saved : {file}")
 
