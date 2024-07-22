@@ -2,7 +2,8 @@
 음성 통신간 피싱 공격 방지를 위한 Audio waterMark 기능을 시뮬레이션 하는 프로그램.
 
 ## 실행 화면
-![화면 캡처 2024-07-19 131832](https://github.com/user-attachments/assets/65d46e2e-2648-4d05-b1cb-113c770e590b)
+![화면 캡처 2024-07-22 171328](https://github.com/user-attachments/assets/a1c59a83-ce19-4cf5-b210-c172d00b144e)
+
 
 
 Sound file을 불러오거나 녹음하여 음성 파일을 선택(Sound file은 1Channel 16,000Hz (.wav) 음성 파일이어야만 함.)
