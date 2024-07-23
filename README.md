@@ -2,7 +2,8 @@
 음성 통신간 피싱 공격 방지를 위한 Audio waterMark 기능을 시뮬레이션 하는 프로그램.
 
 ## 실행 화면
-![화면 캡처 2024-07-22 171328](https://github.com/user-attachments/assets/a1c59a83-ce19-4cf5-b210-c172d00b144e)
+![화면 캡처 2024-07-23 162352](https://github.com/user-attachments/assets/aee2c5e3-192d-4462-b693-5cea9c81c09b)
+
 
 ## Menu
 
