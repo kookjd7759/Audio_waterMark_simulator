@@ -19,6 +19,6 @@ Sound file을 불러오거나 녹음하여 음성 파일을 선택(Sound file은
  - (setting) : Simulation의 mode 설정 기능, Caller가 인가된 금융 기관인지, 금융 기관을 사칭한 공격 단체인지 설정 가능
 
  - (Excution) : 위 설정으로 Simulation 실행
- -   [Make a call] : 전화 통신 Simulation 시작
+    - [Make a call] : 전화 통신 Simulation 시작
 
 Watermark 검출 및 미검출로 인한 인가된 금융 기관 판단 여부에 걸린 시간(Detect Time)과 판단 결과(Detect Result)를 표시
