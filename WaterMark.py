@@ -8,6 +8,7 @@ import random
 import Path
 
 def createKey():
+    print('WaterMark.createkey:: start create Key')
     # RSA 키 생성
     key = RSA.generate(2048)
     private_key = key.export_key()
@@ -20,7 +21,10 @@ def createKey():
     with open(path + 'public.pem', "wb") as f:
         f.write(public_key)
 
+    print('WaterMark.createkey:: end create Key')
+
 def create():
+    print('WaterMark.create:: start create new Watermark')
     private_key_file = Path.getKeyFolder() + 'private.pem'
     # 타임스탬프 추가
     timestamp = int(time.time())
@@ -37,8 +41,7 @@ def create():
     # 해시 값을 사용하여 16비트로 줄이기
     short_watermark_bits = bin(int(signature.hex(), 16))[-16:]
     
-    print(f"Watermark Bits: {short_watermark_bits}")
-
+    print(f'WaterMark.create:: return {short_watermark_bits}')
     return np.array(list(map(int, short_watermark_bits)))
 
 def verify_watermark(watermark_data, signature, public_key_file):

@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import numpy as np
@@ -6,6 +7,7 @@ import Path
 import torch
 import wavmark
 import threading
+from datetime import datetime
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -18,7 +20,31 @@ SOUNDFILE_GB_NAME = 'Sound file'
 WATERMARK_GB_NAME = 'Watermark'
 REALTIMESETTING_GB_NAME = 'Real Time Simulation (Setting)'
 REALTIMEEXCUTION_GB_NAME = 'Real Time Simulation (Excution)'
-SOUNDPATH = ''
+
+
+class DetectThread(threading.Thread):
+
+    def __init__(self, path, model):
+        super().__init__()
+        self.path = path
+        self.model = model
+        self.result = None
+
+    def run(self):
+        signal, sample_rate = soundfile.read(self.path)
+        payload_decoded, _ = wavmark.decode_watermark(self.model, signal, show_progress=False)
+
+        try:
+            payload_list = payload_decoded.tolist()
+            payload_txt = ''.join(str(x) for x in payload_list)
+            self.result = payload_txt
+        except:
+            self.result = 'None'
+
+    def get_result(self):
+        return self.result
+
+
 
 class LoadingDialog(QDialog):
 
@@ -45,54 +71,129 @@ class LoadingDialog(QDialog):
     def setProgress(self, string, num):
         self.label.setText(string)
         self.progress.setValue(num)
-    
+
 
 
 class MyWindow(QWidget):
+    SOUNDPATH = ''
+    CALLTIME_SEC = 0
+    CALL_START = 0
+    CALL_END = 0
 
     def update_audioDetail(self):
         fs, length = audio.getAudioDetail(self.SOUNDPATH)
         self.lbl_audioDetail.setText(f'Sampling Frequency (fs) : {fs}\t Audio Length (sec) : {length}')
 
     def update_soundPath(self, path):
-        if audio.isSoundFileEnable(path):
+        if os.path.exists(path):
             self.SOUNDPATH = path
-            self.lbl_filePath.setText(self.SOUNDPATH)
+            self.line_filePath.setText(self.SOUNDPATH)
         else:
             self.SOUNDPATH = ''
-            self.lbl_filePath.setText('')
+            self.line_filePath.setText('')
         
         self.update_audioDetail()
 
-    def update_CallerInfo(self):
+    def update_callerInfo(self):
         line = ''
         if self.rbtn_institution.isChecked():
             line = '[Caller : Institution], Make a Call with a Watermarked wave'
         else:
             line = '[Caller : Attacker], Make a Call with a None Watermarked wave'
         
-        self.lbl_CallerInfo.setText(line)
+        self.lbl_callerInfo.setText(line)
 
-    def realtimeRecording(sef, stop_recording):
-        path = Path.getTempSoundFile()
-        print('start Real time recording')
-        while True:
-            audio.recording(1.5, path)
-
-            if stop_recording.is_set():
-                break
+    def update_detectTime(self):
+        if self.CALL_END == 0 and self.CALL_START == 0:
+            self.lbl_dectectTime.setText('\tDetect Time - 0:00:00.000000')
+            return
         
-        print('Real time recording ended')
+        delta = self.CALL_END - self.CALL_START
+
+        line = '\tDetect Time - ' + str(delta)
+        self.lbl_dectectTime.setText(line)
+
+    def update_detectResult(self, result):
+        if result == 1:
+            self.line_detectResult.setText('It is safe call (Watermarked wave)')
+        elif result == -1:
+            self.line_detectResult.setText('It is dangerous call (None watermarked wave)')
+        else:
+            self.line_detectResult.setText('')
+
+
+
+    def getMSsec(sef):
+        dt = datetime.now()
+        dt.microsecond
+        return dt
 
     def getrecordTime(self):
         string = self.cb_recordTime.currentText()
         return int(string)
 
-    def center(self):
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
+    def emptyRecievedFolder(self):
+        path = Path.getRecievedFoler()
+        for f in os.listdir(path):
+            os.remove(os.path.join(path, f))
+
+    def realtimeRecording(self, stop_recording, watermark):
+        print('start Real time recording')
+        idx = 0
+        while True:
+            idx += 1
+            targetPath = Path.getRecievedFoler() + f'sound{idx}.wav'
+            
+            if watermark: # Create waterMarked wave 
+                tempPath = Path.getTempFoler() + f'sound{idx}.wav'
+                payload = wm.create()
+                audio.recording(1.1, tempPath)
+                signal, sample_rate = soundfile.read(tempPath)
+
+                watermarked_signal, _ = wavmark.encode_watermark(self.model, signal, payload, show_progress=False)
+
+                soundfile.write(targetPath, watermarked_signal, 16000)
+                os.remove(tempPath)
+            else: # Create None waterMarked wave 
+                targetPath = Path.getRecievedFoler() + f'sound{idx}.wav'
+                audio.recording(1.1, targetPath)
+            
+            if stop_recording.is_set():
+                break
+        
+        print('Real time recording ended')
+
+    def realtimeDetecting(self):
+        path1 = Path.getRecievedFoler() + 'sound1.wav'
+        path2 = Path.getRecievedFoler() + 'sound2.wav'
+
+        while os.path.exists(path1) == False:
+            time.sleep(0.2)
+        
+        self.check1 = DetectThread(path1, self.model)
+        self.check1.start()
+            
+        while os.path.exists(path2) == False:
+            time.sleep(0.2)
+
+        self.check2 = DetectThread(path2, self.model)
+        self.check2.start()
+        
+        self.check1.join()
+        result1 = self.check1.get_result()
+        print(f'Detect sound1 Result : {result1}')
+
+        if result1 != 'None':
+            return True
+        
+        self.check2.join()
+        result2 = self.check2.get_result()
+        print(f'Detect sound2 Result : {result2}')
+
+        if result1 != 'None':
+            return True
+        else:
+            return False
 
 
 
@@ -102,18 +203,20 @@ class MyWindow(QWidget):
         self.gb_realTimeSetting = self.findChildren(QGroupBox)[2]
         self.gb_realTimeExcution = self.findChildren(QGroupBox)[3]
 
-        self.lbl_filePath = self.gb_sound.findChildren(QLineEdit)[0]
+        self.line_filePath = self.gb_sound.findChildren(QLineEdit)[0]
         self.cb_recordTime = self.gb_sound.findChildren(QComboBox)[0]
         self.lbl_audioDetail = self.gb_sound.findChildren(QLabel)[0]
 
-        self.lbl_insert_Result = self.gb_waterMark.findChildren(QLineEdit)[0]
-        self.lbl_extract_Result = self.gb_waterMark.findChildren(QLineEdit)[1]
+        self.line_insert_Result = self.gb_waterMark.findChildren(QLineEdit)[0]
+        self.line_extract_Result = self.gb_waterMark.findChildren(QLineEdit)[1]
 
         self.rbtn_institution = self.gb_realTimeSetting.findChildren(QRadioButton)[0]
         self.rbtn_attacker = self.gb_realTimeSetting.findChildren(QRadioButton)[1]
         self.btn_MakeACall = self.gb_realTimeExcution.findChildren(QPushButton)[0]
         self.btn_hangUp = self.gb_realTimeExcution.findChildren(QPushButton)[1]
-        self.lbl_CallerInfo = self.gb_realTimeExcution.findChildren(QLabel)[0]
+        self.lbl_callerInfo = self.gb_realTimeExcution.findChildren(QLabel)[0]
+        self.lbl_dectectTime = self.gb_realTimeExcution.findChildren(QLabel)[1]
+        self.line_detectResult = self.gb_realTimeExcution.findChildren(QLineEdit)[0]
 
     def load_loadModel(self):
         self.model = wavmark.load_model().to(torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
@@ -127,12 +230,33 @@ class MyWindow(QWidget):
         self.update_audioDetail()
         self.rbtn_institution.setChecked(True)
         self.btn_hangUp.setEnabled(False)
-        self.update_CallerInfo()
+        self.update_callerInfo()
+
+    def load_folder(self):
+        Folder_temp = Path.getTempFoler()
+        Folder_receivced = Path.getRecievedFoler()
+        Folder_sound = Path.getSoundFolder()
+        Folder_key = Path.getKeyFolder()
+
+        if os.path.exists(Folder_temp) == False:
+            os.mkdir(Folder_temp)
+        if os.path.exists(Folder_receivced) == False:
+            os.mkdir(Folder_receivced)
+        if os.path.exists(Folder_sound) == False:
+            os.mkdir(Folder_sound)
+        if os.path.exists(Folder_key) == False:
+            os.mkdir(Folder_key)
 
     def load_setThreads(self):
         self.stop_recording = threading.Event()
 
 
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
     def __init__(self):
         super().__init__()
@@ -143,12 +267,11 @@ class MyWindow(QWidget):
         QApplication.processEvents()  # 이벤트를 처리하여 창이 표시되도록 함
 
         self.loading_dialog.setProgress('UIinit ...', 0)
-        timer = QTimer(self)
-        timer.timeout.connect(self.timer_function)
         self.UIinit()
         self.loading_dialog.setProgress('FindChildren ...', 20)
         self.load_findChildren()
         self.loading_dialog.setProgress('Setting ...', 40)
+        self.load_folder()
         self.load_set()
         self.loading_dialog.setProgress('Load Model ...', 60)
         self.load_loadModel()
@@ -181,11 +304,11 @@ class MyWindow(QWidget):
 
         vbox = QVBoxLayout()
 
-        lbl_filepath = QLineEdit(self)
-        lbl_filepath.setReadOnly(True)
+        line_filepath = QLineEdit(self)
+        line_filepath.setReadOnly(True)
         lbl_audioDetail = QLabel(self)
 
-        vbox.addWidget(lbl_filepath)
+        vbox.addWidget(line_filepath)
         vbox.addWidget(lbl_audioDetail)
 
         btn_selectFile = QPushButton('Import sound file', self)
@@ -194,7 +317,7 @@ class MyWindow(QWidget):
         btn_record.clicked.connect(self.btn_record_function)
             
         lbl_time = QLabel(self)
-        lbl_time.setText('        Recording time (sec) :')
+        lbl_time.setText('\tRecording time (sec) :')
 
         cb_recordTime = QComboBox(self)
         for i in range(2, 11):
@@ -219,21 +342,21 @@ class MyWindow(QWidget):
         lbl_insert = QLabel('[Insert]', self)
         btn_WMcreate_insert = QPushButton('Create And insert', self)
         btn_WMcreate_insert.clicked.connect(self.btn_WMcreate_insert_function)
-        lbl_insert_Result = QLineEdit(self)
-        lbl_insert_Result.setReadOnly(True)
+        line_insert_Result = QLineEdit(self)
+        line_insert_Result.setReadOnly(True)
         
         lbl_extract = QLabel('[Extract]', self)
         btn_WMextract = QPushButton('Extract', self)
-        lbl_extract_Result = QLineEdit(self)
-        lbl_extract_Result.setReadOnly(True)
+        line_extract_Result = QLineEdit(self)
+        line_extract_Result.setReadOnly(True)
         btn_WMextract.clicked.connect(self.btn_WMextract_function)
 
         grid.addWidget(lbl_insert, 0, 0)
         grid.addWidget(lbl_extract, 0, 1)
         grid.addWidget(btn_WMcreate_insert, 1, 0)
         grid.addWidget(btn_WMextract, 1, 1)
-        grid.addWidget(lbl_insert_Result, 2, 0)
-        grid.addWidget(lbl_extract_Result, 2, 1)
+        grid.addWidget(line_insert_Result, 2, 0)
+        grid.addWidget(line_extract_Result, 2, 1)
 
         groupbox.setLayout(grid)
         return groupbox
@@ -263,11 +386,11 @@ class MyWindow(QWidget):
         groupbox = QGroupBox(REALTIMEEXCUTION_GB_NAME)
         
         vbox = QVBoxLayout()
-        lbl_CallerInfo = QLabel('[Caller : Institution], Make a Call with a watermarked wave', self)
-        vbox.addWidget(lbl_CallerInfo)
+        lbl_callerInfo = QLabel('[Caller : Institution], Make a Call with a watermarked wave', self)
+        vbox.addWidget(lbl_callerInfo)
 
         btn_start = QPushButton('Make a call', self)
-        btn_start.clicked.connect(self.btn_callStart_funtion)
+        btn_start.clicked.connect(self.btn_call_funtion)
         btn_end = QPushButton('Hang up', self)
         btn_end.clicked.connect(self.btn_callEnd_funtion)
         
@@ -277,8 +400,17 @@ class MyWindow(QWidget):
 
         vbox.addLayout(hbox)
 
-        lbl_timerLable = QLabel('00:00:00:000')
-        vbox.addWidget(lbl_timerLable)
+        lbl_detectTime = QLabel('Detect Time - 0:00:00.000000', self)
+        lbl_detectResultLabel = QLabel('\tDetect Result : ', self)
+        line_detectResult = QLineEdit('', self)
+        line_detectResult.setReadOnly(True)
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(lbl_detectTime)
+        hbox.addWidget(lbl_detectResultLabel)
+        hbox.addWidget(line_detectResult)
+
+        vbox.addLayout(hbox)
 
         groupbox.setLayout(vbox)
         return groupbox
@@ -286,7 +418,7 @@ class MyWindow(QWidget):
 
 
     def btn_selectSoundFile_function(self):
-        fname = QFileDialog.getOpenFileName(self, '파일선택', '', 'AllFiles(*.*)')
+        fname = QFileDialog.getOpenFileName(self, '파일선택', '', 'AllFiles(*.wav)')
         self.update_soundPath(fname[0])
 
     def btn_record_function(self):
@@ -311,7 +443,7 @@ class MyWindow(QWidget):
         for i in range(1, recordTime + 1):
             time.sleep(1)
             self.loading_dialog.setProgress('Recording ...', int(100/recordTime * i))
-        self.loading_dialog.setProgress('완료 !', 100)
+        self.loading_dialog.setProgress('Clear !', 100)
 
         # 서브 창 닫기
         self.loading_dialog.close()
@@ -320,33 +452,52 @@ class MyWindow(QWidget):
         self.gb_waterMark.setEnabled(True)
         
     def btn_WMcreate_insert_function(self):
+        self.loading_dialog = LoadingDialog(lbl='Create Watermark ..')
+        self.loading_dialog.show()
+        QApplication.processEvents() # 이벤트를 처리하여 창이 표시되도록 함
+
         payload = wm.create()
-        print(f'Payload: {payload}, size: {len(payload)}')
-        print("SOUNDPATH: ", self.SOUNDPATH)
+
+        self.loading_dialog.setProgress('insert Watermark ..', 10)
 
         signal, sample_rate = soundfile.read(self.SOUNDPATH)
-
-        watermarked_signal, aa = wavmark.encode_watermark(self.model, signal, payload, show_progress=True)
-        print(aa)
-
+        watermarked_signal, _ = wavmark.encode_watermark(self.model, signal, payload, show_progress=True)
         soundfile.write(self.SOUNDPATH, watermarked_signal, 16000)
 
+        self.loading_dialog.setProgress('set UI ..', 90)
+
         payload_txt = ''.join(str(x) for x in payload)
-        self.lbl_insert_Result.setText(payload_txt)
+        self.line_insert_Result.setText(payload_txt)
+
+        self.loading_dialog.setProgress('Clear !', 100)
+        self.loading_dialog.close()
 
     def btn_WMextract_function(self):
+        self.loading_dialog = LoadingDialog(lbl='Extract Watermark ..')
+        self.loading_dialog.show()
+        QApplication.processEvents() # 이벤트를 처리하여 창이 표시되도록 함
+
         signal, sample_rate = soundfile.read(self.SOUNDPATH)
         payload_decoded, _ = wavmark.decode_watermark(self.model, signal, show_progress=True)
 
-        print(payload_decoded)
+        self.loading_dialog.setProgress('set UI ..', 90)
+
+        result = ''
         try:
             payload_list = payload_decoded.tolist()
-            payload_txt = ''.join(str(x) for x in payload_list)
-            self.lbl_extract_Result.setText(payload_txt)
+            result = ''.join(str(x) for x in payload_list)
         except:
-            self.lbl_extract_Result.setText('None')
+            result = 'None'
+        self.line_extract_Result.setText(result)
+        
+        self.loading_dialog.setProgress('Clear !', 100)
+        self.loading_dialog.close()
 
-    def btn_callStart_funtion(self):
+    def btn_call_funtion(self):
+        self.loading_dialog = LoadingDialog()
+        self.loading_dialog.show()
+        QApplication.processEvents()  # 이벤트를 처리하여 창이 표시되도록 함
+
         self.gb_sound.setEnabled(False)
         self.gb_waterMark.setEnabled(False)
         self.gb_realTimeSetting.setEnabled(False)
@@ -354,11 +505,31 @@ class MyWindow(QWidget):
         self.btn_MakeACall.setEnabled(False)
         self.btn_hangUp.setEnabled(True)
 
-        self.realtimeRecording_thread =  threading.Thread(target=self.realtimeRecording, args=(self.stop_recording,))
-        self.realtimeRecording_thread.start()
-        print('call start')
+        waterMark = self.rbtn_institution.isChecked()
+        self.realTimeRecording_thread =  threading.Thread(target=self.realtimeRecording, args=(self.stop_recording, waterMark))
+        self.realTimeRecording_thread.start()
+        self.CALLTIME_SEC = 0
+        self.CALL_END = 0
+        self.CALL_START = 0
+        self.update_detectTime()
+
+        self.CALL_START = self.getMSsec()
+
+        if self.realtimeDetecting() == True:
+            self.update_detectResult(1)
+        else:
+            self.update_detectResult(-1)
+        
+        self.btn_callEnd_funtion()
+
+        self.loading_dialog.setProgress('Clear !', 100)
+
+        # 서브 창 닫기
+        self.loading_dialog.close()
 
     def btn_callEnd_funtion(self):
+        self.detectTime_function()
+
         self.gb_sound.setEnabled(True)
         self.gb_waterMark.setEnabled(True)
         self.gb_realTimeSetting.setEnabled(True)
@@ -367,15 +538,18 @@ class MyWindow(QWidget):
         self.btn_hangUp.setEnabled(False)
 
         self.stop_recording.set()
-        self.realtimeRecording_thread.join()
+        self.realTimeRecording_thread.join()
         self.stop_recording.clear()
-        print('call end')
+
+        self.emptyRecievedFolder()
 
     def rbtn_SettingChange_funtion(self):
-        self.update_CallerInfo()
+        self.update_callerInfo()
 
-    def timer_function(self):
-        print('timer')
+    def detectTime_function(self):
+        self.CALL_END = self.getMSsec()
+        self.update_detectTime()
+
 
 
 if __name__ == '__main__':

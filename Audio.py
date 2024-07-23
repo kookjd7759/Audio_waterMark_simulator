@@ -1,17 +1,15 @@
 import sounddevice as sd
 from scipy.io import wavfile
-import os
 
 fs = 16000
 
 def recording(sec, path):
-    print("Start recording")
+    print(f'Audio.recording:: Start recording, sec : {sec}, path : {path}')
     recording = sd.rec(int(sec * fs), samplerate=fs, channels=1)
     sd.wait()  # 녹음 완료까지 대기
-    print("recording ended")
 
     wavfile.write(path, fs, recording)
-    print(f"file saved : {path}")
+    print('Audio.recording:: end recording ')
 
 def getAudioDetail(path):
     try:
@@ -19,13 +17,6 @@ def getAudioDetail(path):
         return fs, len(length) / fs
     except:
         return '-', '-'
-
-def isSoundFileEnable(path):
-    try:
-        wavfile.read(path)
-        return True
-    except:
-        return False
 
 
 
