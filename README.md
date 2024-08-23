@@ -24,4 +24,11 @@ Sound file을 불러오거나 녹음하여 음성 파일을 선택(Sound file은
 
 Watermark 검출 및 미검출로 인한 인가된 금융 기관 판단 여부에 걸린 시간(Detect Time)과 판단 결과(Detect Result)를 표시
 
-## Real Time insert / detect Algorithm
+## Performance
+실시간 통신 환경에서 발신자가 인가된 금융기관인지 아닌지 판별해내는데 걸리는 시간과 정확성
+
+소음이 미미한 환경에서 각 500회의 시행 평균을 나타낸 그래프
+|발신자|판별에 걸린 시간 (sec)|정확도|
+|:---:|:---:|:---:|
+|인가된 기관(Watermarked audio)|4.1368|100%|
+|공격자(None Watermarked audio)|3.9533|100%|
