@@ -14,7 +14,7 @@
 
 ## Menu
 ### Sound file
-import or record an audio file (Audio file은 1 Channel 16,000Hz (.wav) 음성 파일이어야만 한다.)
+import or record an audio file (Audio file은 1 Channel 16,000Hz (.wav) 음성 파일)
 
 ### Watermark
 For the insertion/extraction test of digital signature.
