@@ -41,7 +41,7 @@ digital signature 2,048bit Binary Data는 음성으로 1초의 분량으로 표�
 ![그림 4  디지털 서명의 삽입_edited](https://github.com/user-attachments/assets/5417ce23-5511-470b-ad03-b8a01707285f)
 이처럼 반복적으로 서명을 삽입하는 방법은 잡음 및 신호 불안정 등 서명 훼손으로 인해 발생할 수 있는 문제점을 해결하기 위한 것으로 수신자 또한 N번 반복하여 추출한 이후 발신자의 인가 여부를 판단한다.
 ### Insert digital signature bitstream 
-수신자는 N회 이전에 정상적인 서명이 추출 및 검증된다면 다음은 추출하지 않는다.
+수신자는 N회 이전에 정상적인 서명이 추출 및 검증된다면 인가된 기관으로부터 발신된 전화로 판단하고 다음은 추출하지 않으며, N회 모두 검출한 이후 서명이 발견되지 않으면 공격자(비인가된 기관)로 판단한다.
 ![그림 5  디지털 서명의 추출_edited](https://github.com/user-attachments/assets/2ddc98ae-5190-4c4d-ae04-eeb1ca752afa)
 
  
