@@ -23,7 +23,7 @@ import or record an audio file (Audio file은 1 Channel 16,000Hz (.wav) 음성 �
 [Extract] : Extract digital signature from the selected audio file
 
 ### Realtime Simulation
- Realtime 음성 통신 환경을 묘사,
+ Realtime 음성 통신 환경에서의 Simulation
  - (setting) : Simulation의 mode 설정 기능, Caller가 인가된 금융 기관인지, 금융 기관을 사칭한 공격 단체인지 설정 가능
 
  - (Excution) : 위 설정으로 Simulation 실행
@@ -34,7 +34,10 @@ Watermark 검출 및 미검출로 인한 인가된 금융 기관 판단 여부�
 
 ## Algorithm
 ### Create digital signature bitstream 
- 
+Data는 2,048bit의 Binary Data로 이루어져 있으며, 출처 데이터와 time stamp, CRC Code로 구성된다.
+### Insert digital signature bitstream 
+Spread-spectrum 기법을 사용해 
+
  
 ## Performance
 실시간 통신 환경에서 수신자가 수신한 전화의 발신지가 인가된 금융기관인지 아닌지 판별해내는데 걸리는 평균 시간과 정확성
