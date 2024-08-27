@@ -107,7 +107,7 @@ class MyWindow(QWidget):
         if self.CALL_END == 0 and self.CALL_START == 0:
             self.lbl_dectectTime.setText('\tDetect Time - 0:00:00.000000')
             return
-        
+        print(f'update_detectTime() {self.CALL_END}')
         delta = self.CALL_END - self.CALL_START
 
         line = '\tDetect Time - ' + str(delta)
@@ -126,6 +126,7 @@ class MyWindow(QWidget):
     def getMSsec(sef):
         dt = datetime.now()
         dt.microsecond
+        print(f'getMSsec() {dt}')
         return dt
 
     def getrecordTime(self):
@@ -184,15 +185,18 @@ class MyWindow(QWidget):
         print(f'Detect sound1 Result : {result1}')
 
         if result1 != 'None':
+            self.CALL_END = self.getMSsec()
             return True
         
         self.check2.join()
         result2 = self.check2.get_result()
         print(f'Detect sound2 Result : {result2}')
 
-        if result1 != 'None':
+        if result2 != 'None':
+            self.CALL_END = self.getMSsec()
             return True
         else:
+            self.CALL_END = self.getMSsec()
             return False
 
 
@@ -520,15 +524,17 @@ class MyWindow(QWidget):
         else:
             self.update_detectResult(-1)
         
-        self.btn_callEnd_funtion()
+        self.btn_callEnd_funtion(False)
 
         self.loading_dialog.setProgress('Clear !', 100)
 
         # 서브 창 닫기
         self.loading_dialog.close()
 
-    def btn_callEnd_funtion(self):
-        self.detectTime_function()
+    def btn_callEnd_funtion(self, record = True):
+        if record:
+            self.CALL_END = self.getMSsec()
+        self.update_detectTime()
 
         self.gb_sound.setEnabled(True)
         self.gb_waterMark.setEnabled(True)
@@ -545,10 +551,6 @@ class MyWindow(QWidget):
 
     def rbtn_SettingChange_funtion(self):
         self.update_callerInfo()
-
-    def detectTime_function(self):
-        self.CALL_END = self.getMSsec()
-        self.update_detectTime()
 
 
 
