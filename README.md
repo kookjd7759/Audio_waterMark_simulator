@@ -18,6 +18,7 @@ import or record an audio file (Audio file은 1 Channel 16,000Hz (.wav) 음성 �
 
 ### Watermark
 For the insertion/extraction test of digital signature.
+
 [Create And insert] : Insert digital signature into the selected audio file 
 
 [Extract] : Extract digital signature from the selected audio file
