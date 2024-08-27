@@ -9,7 +9,7 @@
 ### Program
 해당 프로그램은 실시간 통신 환경을 묘사하여 이러한 Digital signaure의 삽입과 추출, 검증 및 판별 과정을 구현한 것이다.
 
-## 실행 화면
+## Excution screen
 ![화면 캡처 2024-07-23 162352](https://github.com/user-attachments/assets/aee2c5e3-192d-4462-b693-5cea9c81c09b)
 
 ## Menu
