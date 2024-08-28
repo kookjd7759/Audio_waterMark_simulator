@@ -1,7 +1,7 @@
 # Reatime_Auido_Digital_signature
 음성 통신간 피싱 공격 방지를 위한 Realtime Audio Digital Signature Simulator
 
-# OutLine
+# Outline
 ### Background
 기관 사칭형 보이스피싱 범죄는 2016년 3,384건에서 2023년 11,314건으로 3배 이상 증가, Generative AI 기술이 급속히 발전함에 따라 Deep voice 기술을 활용한 보이스피싱 범죄 사례 및 피해 규모도 증가하는 추세이다. 
 ### Solution(Main Idea)
