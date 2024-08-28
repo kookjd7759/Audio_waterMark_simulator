@@ -38,7 +38,7 @@ Watermark 검출 및 미검출로 인한 인가된 금융 기관 판단 여부�
 Data는 2,048bit의 Binary Data로 이루어져 있으며, 출처 데이터와 time stamp, CRC Code로 구성된다.
 ### Insert digital signature bitstream 
 Spread-spectrum 기법을 사용하여 삽입하였다. 
-digital signature 2,048bit Binary Data는 음성으로 1초의 분량으로 표현되며, 삽입은 통화 초기에 N번 삽입되는데, 원활한 추출을 위해 여백 0.1초를 포함한 1.1초를 주기로 삽입된다.
+digital signature 2,048bit Binary Data는 음성으로 1초의 분량으로 표현되며, 삽입은 통화 초기에 N회에 걸쳐서 반복적으로 삽입되는데, 원활한 추출을 위해 여백 0.1초를 포함한 1.1초를 주기로 삽입된다.
 ![그림 4  디지털 서명의 삽입_edited](https://github.com/user-attachments/assets/5417ce23-5511-470b-ad03-b8a01707285f)
 이처럼 반복적으로 서명을 삽입하는 방법은 잡음 및 신호 불안정 등 서명 훼손으로 인해 발생할 수 있는 문제점을 해결하기 위한 것으로 수신자 또한 N번 반복하여 추출한 이후 발신자의 인가 여부를 판단한다.
 ### Insert digital signature bitstream 
