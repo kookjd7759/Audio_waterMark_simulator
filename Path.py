@@ -1,16 +1,17 @@
 import os
+projectName = 'Auido_Digital_signature'
 
 def getKeyFolder():
-    return os.getcwd() + '\\Audio_waterMark_simulator\\Key\\'
+    return os.getcwd() + f'\\{projectName}\\Key\\'
 
 def getSoundFolder():
-    return os.getcwd() + '\\Audio_waterMark_simulator\\Sound\\'
+    return os.getcwd() + f'\\{projectName}\\Sound\\'
 
 def getSoundFile():
-    return os.getcwd() + '\\Audio_waterMark_simulator\\Sound\\sound.wav'
+    return os.getcwd() + f'\\{projectName}\\Sound\\sound.wav'
 
 def getTempFoler():
-    return os.getcwd() + '\\Audio_waterMark_simulator\\temp\\'
+    return os.getcwd() + f'\\{projectName}\\temp\\'
 
 def getRecievedFoler():
-    return os.getcwd() + '\\Audio_waterMark_simulator\\Recieved\\'
+    return os.getcwd() + f'\\{projectName}\\Recieved\\'
