@@ -1,4 +1,4 @@
-# Audio_waterMark_simulator
+# Auido_Digital_signature
 음성 통신간 피싱 공격 방지를 위한 Realtime Audio Digital Signature Simulator.
 
 # OutLine
