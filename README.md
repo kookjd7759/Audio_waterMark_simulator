@@ -1,4 +1,4 @@
-# Reatime_Auido_Digital_signature
+# Auido Digital signature
 음성 통신간 피싱 공격 방지를 위한 Realtime Audio Digital Signature Simulator
 
 # Outline
